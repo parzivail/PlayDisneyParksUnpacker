@@ -9,5 +9,7 @@ public enum ErrorCode
 	UnsupportedManifest = -4,
 	DestFileExists = -5,
 	JsPackageImportConflict = -6,
-	HtmlPatchFailed = -7
+	HtmlPatchFailed = -7,
+	MalformedJsonData = -8,
+	ArgumentParseFailed = -9,
 }
