@@ -239,6 +239,8 @@ public static class Program
 		return injected;
 	}
 
+	private static readonly Regex UglyModuleNameRegex = new("(.+)_(\\d+)", RegexOptions.Compiled);
+
 	private static void SimplifyImports(JsModule module)
 	{
 		if (module.Imports.Length <= 2)
@@ -250,6 +252,12 @@ public static class Program
 		{
 			var import = module.Imports[i];
 			var arg = module.ImportArgs[i];
+			var commentArg = arg;
+
+			// Prevent diff spam across versions by normalizing comment
+			var match = UglyModuleNameRegex.Match(arg);
+			if (match.Success)
+				commentArg = $"{match.Groups[1].Value}_n";
 
 			var (className, newClassName, newArg) = ParsePackagePath(import, module.Imports);
 
@@ -261,13 +269,13 @@ public static class Program
 				module.Content.Replace(classReference, newClassName);
 				module.Content.Replace(arg, newArg);
 
-				injectedJs.AppendLine($"    const {className} = {newArg}.{className}; // PDPU: {arg} -> {newArg}");
+				injectedJs.AppendLine($"    const {className} = {newArg}.{className}; // PDPU: {commentArg} -> {newArg}");
 			}
 			else
 			{
 				// Otherwise, other properties are accessed, just rename the argument
 				module.Content.Replace(arg, newClassName);
-				injectedJs.AppendLine($"    // PDPU: {arg} -> {newClassName}: only direct accessors");
+				injectedJs.AppendLine($"    // PDPU: {commentArg} -> {newClassName}: only direct accessors");
 			}
 		}
 
